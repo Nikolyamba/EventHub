@@ -13,7 +13,8 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer(), autoincrement=True, primary_key=True)
     login = Column(String(50), unique=True, nullable=False)
-    password = Column(String(50), unique=False, nullable=False)
+    password = Column(String(100), unique=False, nullable=False)
     role = Column(Enum(UserRole, name="user_role"), nullable=False, default=UserRole.common_user)
-    organized_events = relationship("EventOrganizer", backref='user')
-    attended_events = relationship("EventAttend", backref='user')
+
+    organized_events = relationship("EventOrganizer", backref="user")
+    attended_events = relationship("EventAttend", backref="user")

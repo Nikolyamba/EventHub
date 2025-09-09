@@ -19,8 +19,9 @@ class Event(Base):
     city = Column(String(50), nullable=False)
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=False)
-    organizers = relationship("EventOrganizer", backref='event')
-    attendees = relationship("EventAttend", backref='event')
+
+    organizers = relationship("EventOrganizer", backref="event")
+    attendees = relationship("EventAttend", backref="event")
 
 class EventOrganizer(Base):
     __tablename__ = "event_organizers"
