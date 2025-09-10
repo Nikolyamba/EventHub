@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 import bcrypt
 from database.session import get_db
 from models.user_model import User
-from routes.jwt_auth import create_access_token, create_refresh_token
+from routes.jwt_auth import create_access_token, create_refresh_token, get_current_user, r
 
 u_router = APIRouter()
 
@@ -37,3 +37,31 @@ async def create_user(data: UserRegister, db: Session = Depends(get_db)) -> dict
         print(f"Ошибка: {e}")
         raise HTTPException(status_code=500, detail="Произошла ошибка на сервере")
 
+@u_router.post("/users/login")
+async def user_login(login: str, password: str, db: Session = Depends(get_db)) -> dict:
+    try:
+        user = db.query(User).filter(User.login == login, User.password == hashed_password(password)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="Логин или пароль введены неправильно!")
+        access_token = create_access_token(data={"sub": user.login})
+        refresh_token = create_refresh_token(data={"sub": user.login})
+        return {"success": True, "payload": {"access_token": access_token, "refresh_token": refresh_token}}
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        raise HTTPException(status_code=500, detail="Произошла ошибка на сервере")
+
+@u_router.post("/refresh")
+async def get_new_tokens(user: User = Depends(get_current_user)) -> dict:
+    if r.exists(f"refresh_token:{user.login}"):
+        access_token = create_access_token(data={"sub": user.login})
+        refresh_token = create_refresh_token(data={"sub": user.login})
+        return {"success": True, "payload": {"access_token": access_token, "refresh_token": refresh_token}}
+    else:
+        raise HTTPException(status_code=401, detail="Refresh token не найден или истёк")
+
+@u_router.post("/users/logout")
+async def user_logout(user: User = Depends(get_current_user)) -> dict:
+    key = f"refresh_token:{user.login}"
+    if r.exists(key):
+        r.delete(key)
+    return {"success": True, "message": "Вы вышли из системы"}

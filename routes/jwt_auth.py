@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 import jwt
+import redis
 from dotenv import load_dotenv
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -16,6 +17,8 @@ SECRET_KEY = os.getenv("KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -28,6 +31,8 @@ def create_refresh_token(data: dict):
     expire = datetime.utcnow() + timedelta(days=30)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    user_login = data.get('sub')
+    r.setex(f"refresh_token:{user_login}", timedelta(days=30), encoded_jwt)
     return encoded_jwt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
