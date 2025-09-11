@@ -52,16 +52,24 @@ async def user_login(login: str, password: str, db: Session = Depends(get_db)) -
 
 @u_router.post("/refresh")
 async def get_new_tokens(user: User = Depends(get_current_user)) -> dict:
-    if r.exists(f"refresh_token:{user.login}"):
-        access_token = create_access_token(data={"sub": user.login})
-        refresh_token = create_refresh_token(data={"sub": user.login})
-        return {"success": True, "payload": {"access_token": access_token, "refresh_token": refresh_token}}
-    else:
-        raise HTTPException(status_code=401, detail="Refresh token не найден или истёк")
+    try:
+        if r.exists(f"refresh_token:{user.login}"):
+            access_token = create_access_token(data={"sub": user.login})
+            refresh_token = create_refresh_token(data={"sub": user.login})
+            return {"success": True, "payload": {"access_token": access_token, "refresh_token": refresh_token}}
+        else:
+            raise HTTPException(status_code=401, detail="Refresh token не найден или истёк")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        raise HTTPException(status_code=500, detail="Произошла ошибка на сервере")
 
 @u_router.post("/users/logout")
 async def user_logout(user: User = Depends(get_current_user)) -> dict:
-    key = f"refresh_token:{user.login}"
-    if r.exists(key):
-        r.delete(key)
-    return {"success": True, "message": "Вы вышли из системы"}
+    try:
+        key = f"refresh_token:{user.login}"
+        if r.exists(key):
+            r.delete(key)
+        return {"success": True, "message": "Вы вышли из системы"}
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        raise HTTPException(status_code=500, detail="Произошла ошибка на сервере")
