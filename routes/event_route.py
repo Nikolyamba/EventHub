@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from database.session import get_db
 from models import User
 from models.event_models import EventType, Event, EventOrganizer, EventAttend
+from routes.cel import send_to_email
 from routes.jwt_auth import get_current_user
 
 e_router = APIRouter()
@@ -96,6 +97,8 @@ async def sign_on_event(event_id: str, db: Session = Depends(get_db), user: User
         db.add(member)
         db.commit()
         db.refresh(event)
+        if user.email:
+            send_to_email.delay(user_email=user.email, event_id=event.id)
         return event
     except Exception as e:
         print(f"Ошибка: {e}")

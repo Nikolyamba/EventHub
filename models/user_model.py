@@ -14,6 +14,7 @@ class User(Base):
     id = Column(Integer(), autoincrement=True, primary_key=True)
     login = Column(String(50), unique=True, nullable=False)
     password = Column(String(100), unique=False, nullable=False)
+    email = Column(String(50), unique=True, nullable=True)
     role = Column(Enum(UserRole, name="user_role"), nullable=False, default=UserRole.common_user)
 
     organized_events = relationship("EventOrganizer", backref="user")

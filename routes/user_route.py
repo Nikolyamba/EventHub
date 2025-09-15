@@ -18,6 +18,8 @@ def hashed_password(password: str):
 class UserRegister(BaseModel):
     login: Annotated[str, Field(min_length=8, max_length=50)]
     password: Annotated[str, Field(min_length=8, max_length=50)]
+    email: Annotated[str, Field(max_length=50)]
+
 
 @u_router.post("/users")
 async def create_user(data: UserRegister, db: Session = Depends(get_db)) -> dict:
@@ -26,7 +28,8 @@ async def create_user(data: UserRegister, db: Session = Depends(get_db)) -> dict
         if old_user:
             raise HTTPException(status_code=409, detail="Пользователь с таким логином уже зарегестрирован!")
         new_user = User(login=data.login,
-                        password=hashed_password(data.password))
+                        password=hashed_password(data.password),
+                        email=data.email)
         access_token = create_access_token(data={"sub": data.login})
         refresh_token = create_refresh_token(data={"sub": data.login})
         db.add(new_user)
